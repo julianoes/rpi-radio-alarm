@@ -201,7 +201,6 @@ class AlarmTimeResource(object):
         min = int(min)
 
         if hour is not None and min is not None:
-            # TODO: add checks
             if 23 >= hour >= 0 and 59 >= min >= 0:
                 self.config.set('alarm/hour', hour)
                 self.config.set('alarm/min', min)
