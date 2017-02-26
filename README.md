@@ -1,6 +1,6 @@
-# RPi Alarm
+# RPi Radio Alarm
 
-This is a simple internet radio and radio alarm for the Raspberry Pi.
+This is a simple internet radio alarm for the Raspberry Pi.
 It is basically a tiny REST interface using [Gunicorn](http://gunicorn.org/) and [Falcon](https://falconframework.org) playing radio using [mplayer](http://www.mplayerhq.hu).
 
 ## Installation
