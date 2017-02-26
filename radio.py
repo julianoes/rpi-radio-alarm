@@ -139,6 +139,7 @@ class AlarmResource(object):
         resp.status = falcon.HTTP_200
         resp.body = json.dumps(result)
 
+
 api = falcon.API()
 
 radio = Radio()
@@ -148,3 +149,7 @@ alarm_resource = AlarmResource(radio)
 
 api.add_route('/radio/{action}', radio_resource)
 api.add_route('/alarm/{action}', alarm_resource)
+
+
+if __name__ == '__main__':
+    print("Needs to be run using 'gunicorn -b :80 radio:api'")
