@@ -7,6 +7,7 @@ import falcon
 import json
 import threading
 
+
 """Simple radio alarm using a Raspberry Pi.
 
 This plays internet radio using mplayer and provides some RESTful API
@@ -16,6 +17,45 @@ Author: Julian Oes <julian@oes.ch>
 
 Published under 3-Clause BSD License.
 """
+
+
+class PersistentConfig(object):
+    CONFIG_FILENAME = 'radio-config.json'
+    DEFAULT_CONFIG = {"alarm": {"on": False},
+                      "radio": {"playing": False}}
+
+    def __init__(self):
+        try:
+            with open(self.CONFIG_FILENAME, 'r') as f:
+                self._config = json.load(f)
+        except:
+            self._config = None
+
+        if self._config is None:
+            self._config = self.DEFAULT_CONFIG
+        self.save()
+
+    def save(self):
+        print("saving config:\n %s" % self._config)
+        with open(self.CONFIG_FILENAME, 'w') as f:
+            json.dump(self._config, f, indent=4)
+
+    def set(self, key, value):
+        key_parts = key.split("/")
+        old_value = self._config
+        # We don't need the last value but the second last,
+        # so the "reference pointing to the last one."
+        for key_part in key_parts[:-1]:
+            old_value = old_value[key_part]
+        old_value[key_parts[-1]] = value
+        self.save()
+
+    def get(self, key):
+        key_parts = key.split("/")
+        ret_value = self._config
+        for key_part in key_parts:
+            ret_value = ret_value[key_part]
+        return ret_value
 
 
 class Radio(object):
@@ -42,8 +82,11 @@ class Radio(object):
 
 class RadioResource(object):
 
-    def __init__(self, radio):
+    def __init__(self, radio, config):
         self.radio = radio
+        self.config = config
+        if self.config.get('radio/playing'):
+            self.radio.start_playing()
 
     def on_get(self, req, resp, action):
         """Handles GET requests"""
@@ -54,12 +97,14 @@ class RadioResource(object):
             else:
                 result = {"status": "ok let's start this"}
                 self.radio.start_playing()
+            self.config.set('radio/playing', True)
         elif action == "stop":
             if self.radio.is_playing():
                 result = {"status": "ok let's stop this"}
                 self.radio.stop_playing()
             else:
                 result = {"status": "already stopped"}
+            self.config.set('radio/playing', False)
         elif action == "status":
             if self.radio.is_playing():
                 result = {"status": "started"}
@@ -74,9 +119,9 @@ class RadioResource(object):
 
 class AlarmResource(object):
 
-    def __init__(self, radio):
+    def __init__(self, radio, config):
+        self.config = config
         self.last_should_be_playing = False
-        self.on = False
         self.wake_hour = 6
         self.wake_min = 55
 
@@ -91,7 +136,7 @@ class AlarmResource(object):
 
     def run(self):
         while not self.thread_should_exit:
-            if self.on:
+            if self.config.get('alarm/on'):
                 self.check_time()
             time.sleep(1)
 
@@ -116,20 +161,21 @@ class AlarmResource(object):
         # pp.pprint(req)
 
         if action == "on":
-            if self.on:
+            if self.config.get('alarm/on'):
                 result = {"status": "alarm already on"}
             else:
                 result = {"status": "ok, set alarm on"}
-                self.on = True
+            self.config.set('alarm/on', True)
 
         elif action == "off":
-            if self.on:
+            if self.config.get('alarm/on'):
                 result = {"status": "ok, set alarm off"}
-                self.on = False
             else:
                 result = {"status": "alarm already off"}
+            self.config.set('alarm/on', False)
+
         elif action == "status":
-            if self.on:
+            if self.config.get('alarm/on'):
                 result = {"status": "on"}
             else:
                 result = {"status": "off"}
@@ -144,8 +190,10 @@ api = falcon.API()
 
 radio = Radio()
 
-radio_resource = RadioResource(radio)
-alarm_resource = AlarmResource(radio)
+config = PersistentConfig()
+
+radio_resource = RadioResource(radio, config)
+alarm_resource = AlarmResource(radio, config)
 
 api.add_route('/radio/{action}', radio_resource)
 api.add_route('/alarm/{action}', alarm_resource)
