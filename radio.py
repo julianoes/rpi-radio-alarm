@@ -21,7 +21,9 @@ Published under 3-Clause BSD License.
 
 class PersistentConfig(object):
     CONFIG_FILENAME = 'radio-config.json'
-    DEFAULT_CONFIG = {"alarm": {"on": False},
+    DEFAULT_CONFIG = {"alarm": {"on": False,
+                                "hour": 06,
+                                "min": 55},
                       "radio": {"playing": False}}
 
     def __init__(self):
@@ -122,8 +124,6 @@ class AlarmResource(object):
     def __init__(self, radio, config):
         self.config = config
         self.last_should_be_playing = False
-        self.wake_hour = 6
-        self.wake_min = 55
 
         self.radio = radio
         self.thread_should_exit = False
@@ -143,8 +143,11 @@ class AlarmResource(object):
     def check_time(self):
 
         now = datetime.datetime.now().time()
-        start = datetime.time(self.wake_hour, self.wake_min)
-        end = datetime.time(self.wake_hour+1, self.wake_min)
+        start = datetime.time(self.config.get('alarm/hour'),
+                              self.config.get('alarm/min'))
+        # Play for 1 hour
+        end = datetime.time(self.config.get('alarm/hour')+1,
+                            self.config.get('alarm/min'))
         radio_should_be_playing = (start <= now <= end)
         if radio_should_be_playing and not self.last_should_be_playing:
             self.radio.start_playing()
@@ -176,9 +179,36 @@ class AlarmResource(object):
 
         elif action == "status":
             if self.config.get('alarm/on'):
-                result = {"status": "on"}
+                result = {"status": "on at %02d:%02d" %
+                          (self.config.get('alarm/hour'),
+                           self.config.get('alarm/min'))}
             else:
                 result = {"status": "off"}
+        else:
+            result = {"status": "not sure what to do with this"}
+
+        resp.status = falcon.HTTP_200
+        resp.body = json.dumps(result)
+
+
+class AlarmTimeResource(object):
+
+    def __init__(self, config):
+        self.config = config
+
+    def on_get(self, req, resp, hour, min):
+        hour = int(hour)
+        min = int(min)
+
+        if hour is not None and min is not None:
+            # TODO: add checks
+            if 23 >= hour >= 0 and 59 >= min >= 0:
+                self.config.set('alarm/hour', hour)
+                self.config.set('alarm/min', min)
+                result = {"status": "time set to %02d:%02d" % (hour, min)}
+            else:
+                result = {"status": "time not valid"}
+
         else:
             result = {"status": "not sure what to do with this"}
 
@@ -194,9 +224,11 @@ config = PersistentConfig()
 
 radio_resource = RadioResource(radio, config)
 alarm_resource = AlarmResource(radio, config)
+alarm_time_resource = AlarmTimeResource(config)
 
 api.add_route('/radio/{action}', radio_resource)
 api.add_route('/alarm/{action}', alarm_resource)
+api.add_route('/alarm/time/{hour}:{min}', alarm_time_resource)
 
 
 if __name__ == '__main__':
