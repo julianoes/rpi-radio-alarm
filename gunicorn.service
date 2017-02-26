@@ -1,0 +1,12 @@
+[Unit]
+Description=Start RpiRadio
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/gunicorn -b :80 radio:api
+WorkingDirectory=/home/julianoes
+User=root
+
+[Install]
+WantedBy=multi-user.target
