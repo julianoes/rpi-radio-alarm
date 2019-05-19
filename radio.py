@@ -155,11 +155,11 @@ class AlarmResource(object):
                             self.config.get('alarm/min'))
         radio_should_be_playing = (start <= now <= end)
         if radio_should_be_playing and not self.last_should_be_playing:
+            self.last_should_be_playing = radio_should_be_playing
             self.radio.start_playing()
-            self.last_should_be_playing = radio_should_be_playing
         elif not radio_should_be_playing and self.last_should_be_playing:
-            self.radio.stop_playing()
             self.last_should_be_playing = radio_should_be_playing
+            self.radio.stop_playing()
 
     def on_get(self, req, resp, action):
         """Handles GET requests"""
