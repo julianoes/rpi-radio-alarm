@@ -22,6 +22,8 @@ git clone https://github.com/julianoes/rpi-radio-alarm
 
 ### Autostart
 
+Edit the [gunicorn.service](gunicorn.service) file and make sure the `WorkingDirectory` matches where this repository is cloned into.
+
 Copy the systemd service file to /etc/systemd/system, enable and start it.
 
 ```

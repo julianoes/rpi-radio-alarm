@@ -5,7 +5,7 @@ After=network.target
 [Service]
 Type=simple
 ExecStart=/usr/bin/gunicorn -b :80 radio:api
-WorkingDirectory=/home/julianoes
+WorkingDirectory=/home/pi/src/rpi-radio-alarm
 User=root
 
 [Install]
