@@ -17,7 +17,7 @@ sudo apt install python git mplayer python-falcon gunicorn
 cd ~
 mkdir src
 cd src
-git clone https://github.com/julianoes/rpi-alarm
+git clone https://github.com/julianoes/rpi-radio-alarm
 ```
 
 ### Autostart
