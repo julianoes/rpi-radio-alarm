@@ -30,7 +30,7 @@ class PersistentConfig(object):
         try:
             with open(self.CONFIG_FILENAME, 'r') as f:
                 self._config = json.load(f)
-        except:
+        except OSError:
             self._config = None
 
         if self._config is None:
