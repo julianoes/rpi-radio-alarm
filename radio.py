@@ -22,7 +22,7 @@ Published under 3-Clause BSD License.
 class PersistentConfig(object):
     CONFIG_FILENAME = 'radio-config.json'
     DEFAULT_CONFIG = {"alarm": {"on": False,
-                                "hour": 06,
+                                "hour": 6,
                                 "min": 55},
                       "radio": {"playing": False}}
 
