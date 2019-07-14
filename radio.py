@@ -22,7 +22,7 @@ Published under 3-Clause BSD License.
 class PersistentConfig(object):
     CONFIG_FILENAME = 'radio-config.json'
     DEFAULT_CONFIG = {"alarm": {"on": False,
-                                "hour": 06,
+                                "hour": 6,
                                 "min": 55},
                       "radio": {"playing": False}}
 
@@ -30,7 +30,7 @@ class PersistentConfig(object):
         try:
             with open(self.CONFIG_FILENAME, 'r') as f:
                 self._config = json.load(f)
-        except:
+        except OSError:
             self._config = None
 
         if self._config is None:
@@ -146,20 +146,28 @@ class AlarmResource(object):
             time.sleep(1)
 
     def check_time(self):
+        radio_should_be_playing = \
+            self.is_weekday() and self.is_within_alarm_time()
 
-        now = datetime.datetime.now().time()
-        start = datetime.time(self.config.get('alarm/hour'),
-                              self.config.get('alarm/min'))
-        # Play for 1 hour
-        end = datetime.time(self.config.get('alarm/hour')+1,
-                            self.config.get('alarm/min'))
-        radio_should_be_playing = (start <= now <= end)
         if radio_should_be_playing and not self.last_should_be_playing:
             self.last_should_be_playing = radio_should_be_playing
             self.radio.start_playing()
         elif not radio_should_be_playing and self.last_should_be_playing:
             self.last_should_be_playing = radio_should_be_playing
             self.radio.stop_playing()
+
+    def is_weekday(self):
+        saturday = 5
+        return datetime.datetime.today().weekday() < saturday
+
+    def is_within_alarm_time(self):
+        now = datetime.datetime.now().time()
+        start = datetime.time(self.config.get('alarm/hour'),
+                              self.config.get('alarm/min'))
+        # Play for 1 hour
+        end = datetime.time(self.config.get('alarm/hour')+1,
+                            self.config.get('alarm/min'))
+        return (start <= now <= end)
 
     def on_get(self, req, resp, action):
         """Handles GET requests"""
