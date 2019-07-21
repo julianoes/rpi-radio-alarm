@@ -78,8 +78,8 @@ class Radio(object):
     def stop_playing(self):
         if self.is_playing():
             self.process.terminate()
-            # Wait 3 seconds and then send kill if necessary
-            time.sleep(3.0)
+            # Wait half a second and then send kill if necessary
+            time.sleep(0.5)
             if self.is_playing():
                 self.process.kill()
             self.process = None
