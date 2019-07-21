@@ -7,6 +7,7 @@ import falcon
 from falcon_cors import CORS
 import json
 import threading
+import os
 
 
 """Simple radio alarm using a Raspberry Pi.
@@ -240,6 +241,10 @@ radio_resource = RadioResource(radio, config)
 alarm_resource = AlarmResource(radio, config)
 alarm_time_resource = AlarmTimeResource(config)
 
+
+api.add_static_route('/',
+                     os.getcwd() + '/static/',
+                     fallback_filename="index.html")
 api.add_route('/radio/{action}', radio_resource)
 api.add_route('/alarm/{action}', alarm_resource)
 api.add_route('/alarm/time/{hour}:{min}', alarm_time_resource)
