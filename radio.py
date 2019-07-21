@@ -4,6 +4,7 @@ import subprocess
 import time
 import datetime
 import falcon
+from falcon_cors import CORS
 import json
 import threading
 
@@ -228,7 +229,8 @@ class AlarmTimeResource(object):
         resp.body = json.dumps(result)
 
 
-api = falcon.API()
+cors = CORS(allow_all_origins=True)
+api = falcon.API(middleware=[cors.middleware])
 
 radio = Radio()
 
