@@ -4,8 +4,10 @@ import subprocess
 import time
 import datetime
 import falcon
+from falcon_cors import CORS
 import json
 import threading
+import os
 
 
 """Simple radio alarm using a Raspberry Pi.
@@ -76,8 +78,8 @@ class Radio(object):
     def stop_playing(self):
         if self.is_playing():
             self.process.terminate()
-            # Wait 3 seconds and then send kill if necessary
-            time.sleep(3.0)
+            # Wait half a second and then send kill if necessary
+            time.sleep(0.5)
             if self.is_playing():
                 self.process.kill()
             self.process = None
@@ -162,11 +164,11 @@ class AlarmResource(object):
 
     def is_within_alarm_time(self):
         now = datetime.datetime.now().time()
-        start = datetime.time(self.config.get('alarm/hour'),
-                              self.config.get('alarm/min'))
+        start = datetime.datetime.time(
+            self.config.get('alarm/hour'), self.config.get('alarm/min'))
         # Play for 1 hour
-        end = datetime.time(self.config.get('alarm/hour')+1,
-                            self.config.get('alarm/min'))
+        end = datetime.datetime.time(
+            self.config.get('alarm/hour')+1, self.config.get('alarm/min'))
         return (start <= now <= end)
 
     def on_get(self, req, resp, action):
@@ -228,7 +230,8 @@ class AlarmTimeResource(object):
         resp.body = json.dumps(result)
 
 
-api = falcon.API()
+cors = CORS(allow_all_origins=True)
+api = falcon.API(middleware=[cors.middleware])
 
 radio = Radio()
 
@@ -238,6 +241,10 @@ radio_resource = RadioResource(radio, config)
 alarm_resource = AlarmResource(radio, config)
 alarm_time_resource = AlarmTimeResource(config)
 
+
+api.add_static_route('/',
+                     os.getcwd() + '/static/',
+                     fallback_filename="index.html")
 api.add_route('/radio/{action}', radio_resource)
 api.add_route('/alarm/{action}', alarm_resource)
 api.add_route('/alarm/time/{hour}:{min}', alarm_time_resource)
