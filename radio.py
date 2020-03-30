@@ -164,10 +164,10 @@ class AlarmResource(object):
 
     def is_within_alarm_time(self):
         now = datetime.datetime.now().time()
-        start = datetime.datetime.time(
+        start = datetime.time(
             self.config.get('alarm/hour'), self.config.get('alarm/min'))
         # Play for 1 hour
-        end = datetime.datetime.time(
+        end = datetime.time(
             self.config.get('alarm/hour')+1, self.config.get('alarm/min'))
         return (start <= now <= end)
 
